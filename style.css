@@ -1,0 +1,49 @@
+li {
+    /** no list item style */
+    list-style: none;
+}
+
+fieldset {
+    border: none;
+    padding: 0;
+}
+
+ul {
+    padding: 0;
+}
+
+label { 
+  display: inline-block;
+  vertical-align: top;
+  width: 10em;
+}
+
+textarea {
+    width: 60%;
+    height: 100px;
+}
+
+input, textarea, select { 
+  display: inline-block;
+  vertical-align: top;
+}
+
+input[type=text], textarea {
+  min-width: 30em;
+}
+
+a#url::after {
+    content: attr(href);
+}
+
+#results, #plain-results {
+    display: none;
+}
+
+body.view-results #results {
+    display: block;
+}
+
+body.view-plain #plain-results {
+    display: block;
+}

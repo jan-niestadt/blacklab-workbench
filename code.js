@@ -12,6 +12,9 @@ function init() {
     document.querySelectorAll('form select, form input, form textarea').forEach(element => {
         element.addEventListener('change', updateUrl);
     });
+    document.querySelectorAll('form input[type=text], form textarea').forEach(element => {
+        element.addEventListener('keyup', updateUrl);
+    });
 
     // Reload corpora if we change the server URL
     document.getElementById('server-url').addEventListener('change', loadCorpora);

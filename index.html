@@ -9,28 +9,38 @@
 	<body>
 		<h1>BlackLab workbench</h1>
 
+        <div class="loading-overlay">
+            <div class="spinner"></div> Loading...
+        </div>
+
+        <p>Server list</a></p>
+
+        <h2><a href='#' onclick="setServerUrl(null)"><span class="server-url"></span></a> / 
+            <a href='#' onclick="setCorpusName(null)"><span class="corpus-name"></span></a></h2>
+
+        <div id="choose-server">
+            <h3>Server:</h3>
+            <ul id="server-list">
+                <li><a href="#" onclick="setServerUrl(this.innerText); return false">http://localhost:8080/blacklab-server</a></li>
+                <li><a href="#" onclick="setServerUrl(this.innerText); return false">http://svotmc10.ivdnt.loc:8080/blacklab-server</a></li>
+            </ul>
+        </div>
+
+        <div id="choose-corpus">
+            <label for="corpus">Corpus:</label>
+            <select id="corpus"></select>
+        </div>
+
         <form id="search-form">
             <fieldset>
                 <ul>
-                    <li>
-                        <label for="server-url">Server URL:</label>
-                        <input type="text" id="server-url" value="http://localhost:8080/blacklab-server" />
+                    <li id="li-corpus">
                     </li>
-                </ul>
-                <ul>
-                    <li>
-                        <label for="corpus">Select Corpus:</label>
-                        <select id="corpus"></select>
-                    </li>
-                </ul>
-                <ul>
                     <li>
                         <label for="patt">BCQL query:</label>
                         <textarea id="patt"></textarea>
                     </li>
-                </ul>
-                <ul>
-                    <li>
+                    <li id="li-outputformat">
                         <label for="outputformat">Output Format:</label>
                         <select id="outputformat">
                             <option value="json">JSON</option>
@@ -38,8 +48,6 @@
                             <option value="csv">CSV</option>
                         </select>
                     </li>
-                </ul>
-                <ul>
                     <li>
                         <label>&nbsp;</label>
                         <input type='submit' value='Send' />

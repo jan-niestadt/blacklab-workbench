@@ -8,16 +8,18 @@ params.append("custom", true);
 document.addEventListener('DOMContentLoaded', init);
 
 function init() {
-    // Whenever a select, input or textarea changes, update the URL to reflect the current state of the form
-    document.querySelectorAll('form select, form input, form textarea').forEach(element => {
-        element.addEventListener('change', updateUrl);
-    });
-    document.querySelectorAll('form input[type=text], form textarea').forEach(element => {
-        element.addEventListener('keyup', updateUrl);
-    });
 
-    // Reload corpora if we change the server URL
-    document.getElementById('server-url').addEventListener('change', loadCorpora);
+    // Corpus change
+    document.getElementById('corpus').addEventListener('change', event => setCorpusName(event.target.value));
+
+    // Form element change hooks    
+    document.querySelectorAll('select#corpus, form select, form input, form textarea').forEach(element => {
+        element.addEventListener('change', onFormElementChange);
+    });
+    // Form text input keyup hooks
+    document.querySelectorAll('form input[type=text], form textarea').forEach(element => {
+        element.addEventListener('keyup', onFormElementChange);
+    });
 
     // Clicking search performs the search
     document.getElementById('search-form').addEventListener('submit', event => {
@@ -28,9 +30,24 @@ function init() {
     // Changing the view type updates the displayed results
     document.getElementById('view-type').addEventListener('change', showSearchResults);
 
-    // Initial load of corpora
+    updateUi();
+}
+
+let interfaceMode = 'choose-server';
+
+function updateUi() {
+    interfaceMode = !serverUrl ? 'choose-server' : (!corpusName ? 'choose-corpus' : 'search');
+
+    document.body.classList = [...document.body.classList].filter(c => !c.startsWith('mode-'));
+    document.body.classList.add(`mode-${interfaceMode}`);
+
+    const showUrl = serverUrl || '';
+    document.querySelectorAll('span.server-url').forEach(el => el.textContent = showUrl);
+    const showCorpus = corpusName || '';
+    document.querySelectorAll('span.corpus-name').forEach(el => el.textContent = showCorpus);
+
     loadCorpora();
-    updateUrl();
+    updateSearchUrl();
 }
 
 let searchContent = null;
@@ -49,6 +66,26 @@ async function performSearch() {
     }
 }
 
+let corpusName = null;
+
+function setCorpusName(name) {
+    corpusName = name;
+    updateUi();
+}
+
+function onFormElementChange(event) {
+    updateSearchUrl();
+}
+
+let serverUrl = null;
+
+function setServerUrl(url) {
+    serverUrl = url;
+    if (!serverUrl)
+        corpusName = null;
+    updateUi();
+}
+
 function showSearchResults() {
     const viewType = document.getElementById('view-type').value;
     document.body.className = `view-${viewType}`; // Set the body class to the view
@@ -62,19 +99,28 @@ function showSearchResults() {
 }
 
 // Update the URL to reflect the current state of the form
-function updateUrl() {
-    const serverUrl = document.getElementById('server-url').value;
+function updateSearchUrl() {
+    const server = serverUrl || '<no-server>';
     const corpus = document.getElementById('corpus').value;
     const endpoint = 'hits';
     const params = new URLSearchParams();
     params.append("patt", document.getElementById('patt').value);
     params.append("outputformat", document.getElementById('outputformat').value);
-    document.getElementById('url').href = `${serverUrl}/corpora/${corpus}/${endpoint}?${params}`;
+    document.getElementById('url').href = `${server}/corpora/${corpus}/${endpoint}?${params}`;
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+let currentCorporaServer = null;
+
 async function loadCorpora() {
+    if (!serverUrl || serverUrl === currentCorporaServer)
+        return;
+    currentCorporaServer = serverUrl;
     const selectedCorpus = document.getElementById('corpus').value;
-    const serverUrl = document.getElementById('server-url').value;
+    document.body.classList.add('loading');
     try {
         const response = await fetch(`${serverUrl}/?${params}`, {
             method: 'GET',
@@ -90,9 +136,12 @@ async function loadCorpora() {
         } else {
             document.getElementById('corpus').value = Object.keys(data.corpora)[0] || '';
         }
-        updateUrl();
+        updateSearchUrl();
+        //await sleep(2000);
     } catch (error) {
         console.error('Error loading corpora:', error);
         document.getElementById('corpus').innerHTML = '<option value="">Error loading corpora</option>';
+    } finally {
+        document.body.classList.remove('loading');
     }
 }

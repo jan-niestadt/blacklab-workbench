@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', init);
 function init() {
 
     // Corpus change
-    document.getElementById('corpus').addEventListener('change', event => setCorpusName(event.target.value));
+    //document.getElementById('corpus').addEventListener('change', event => setCorpusName(event.target.value));
 
     // Form element change hooks    
     document.querySelectorAll('select#corpus, form select, form input, form textarea').forEach(element => {
@@ -28,25 +28,33 @@ function init() {
     });
 
     // Changing the view type updates the displayed results
-    document.getElementById('view-type').addEventListener('change', showSearchResults);
+    document.getElementById('view-plain').addEventListener('change', showSearchResults);
 
     updateUi();
 }
 
 let interfaceMode = 'choose-server';
 
+function updateBodyProp(prop, value) {
+    document.body.classList = [...document.body.classList].filter(c => !c.startsWith(`${prop}-`));
+    document.body.classList.add(`${prop}-${value}`);
+}
+
 function updateUi() {
+    // What's the current mode? select server -> select corpus -> search
     interfaceMode = !serverUrl ? 'choose-server' : (!corpusName ? 'choose-corpus' : 'search');
+    updateBodyProp('mode', interfaceMode);
 
-    document.body.classList = [...document.body.classList].filter(c => !c.startsWith('mode-'));
-    document.body.classList.add(`mode-${interfaceMode}`);
-
+    // Show the current server and corpus in the UI
     const showUrl = serverUrl || '';
     document.querySelectorAll('span.server-url').forEach(el => el.textContent = showUrl);
     const showCorpus = corpusName || '';
     document.querySelectorAll('span.corpus-name').forEach(el => el.textContent = showCorpus);
 
+    // If necessary, load the corpora for the selected server
     loadCorpora();
+
+    // Update the search URL based on the current state of the form
     updateSearchUrl();
 }
 
@@ -87,8 +95,8 @@ function setServerUrl(url) {
 }
 
 function showSearchResults() {
-    const viewType = document.getElementById('view-type').value;
-    document.body.className = `view-${viewType}`; // Set the body class to the view
+    const viewType = document.getElementById('view-plain').checked ? 'plain' : 'results';
+    updateBodyProp('view', viewType); // Set the body class to the view
     if (viewType === 'results') {
         const el = document.getElementById('results');
         el.textContent = searchContent;
@@ -101,7 +109,7 @@ function showSearchResults() {
 // Update the URL to reflect the current state of the form
 function updateSearchUrl() {
     const server = serverUrl || '<no-server>';
-    const corpus = document.getElementById('corpus').value;
+    const corpus = corpusName || '<no-corpus>';
     const endpoint = 'hits';
     const params = new URLSearchParams();
     params.append("patt", document.getElementById('patt').value);
@@ -119,7 +127,6 @@ async function loadCorpora() {
     if (!serverUrl || serverUrl === currentCorporaServer)
         return;
     currentCorporaServer = serverUrl;
-    const selectedCorpus = document.getElementById('corpus').value;
     document.body.classList.add('loading');
     try {
         const response = await fetch(`${serverUrl}/?${params}`, {
@@ -129,13 +136,8 @@ async function loadCorpora() {
             },
         });
         const data = await response.json();
-        document.getElementById('corpus').innerHTML = 
-            Object.entries(data.corpora).map(([key, corpus]) => `<option value="${key}">${key}${corpus.custom.displayName ? ` (${corpus.custom.displayName})` : ''}</option>`).join('');
-        if (selectedCorpus && data.corpora[selectedCorpus]) {
-            document.getElementById('corpus').value = selectedCorpus;
-        } else {
-            document.getElementById('corpus').value = Object.keys(data.corpora)[0] || '';
-        }
+        document.getElementById('corpus-list').innerHTML = 
+            Object.entries(data.corpora).map(([key, corpus]) => `<li><a href="#" onclick="setCorpusName('${key}'); return false">${key}${corpus.custom.displayName ? ` (${corpus.custom.displayName})` : ''}</a></li>`).join('');
         updateSearchUrl();
         //await sleep(2000);
     } catch (error) {

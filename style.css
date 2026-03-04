@@ -1,3 +1,5 @@
+/* Basic styling for the BlackLab Workbench UI */
+
 fieldset {
     border: none;
     padding: 0;
@@ -32,7 +34,8 @@ input[type=text], textarea {
   min-width: 30em;
 }
 
-a#url::after {
+/* a link that shows its URL as text */
+a.show-url#url::after {
     content: attr(href);
 }
 
@@ -43,10 +46,14 @@ a#url::after {
 #choose-server, #choose-corpus, #search-form {
     display: none;
 }
+#response-view {
+    display: none;
+}
 
 body.mode-choose-server #choose-server,
 body.mode-choose-corpus #choose-corpus,
-body.mode-search #search-form {
+body.mode-search #search-form,
+body.mode-search #response-view {
     display: block;
 }
 

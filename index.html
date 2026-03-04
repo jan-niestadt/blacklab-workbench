@@ -8,15 +8,12 @@
 	</head>
 	<body>
 		<h1>BlackLab workbench</h1>
+        <h2><a href='#' onclick="setServerUrl(null)"><span class="server-url"></span></a>
+            <a href='#' onclick="setCorpusName(null)"><span class="corpus-name"></span></a></h2>
 
         <div class="loading-overlay">
             <div class="spinner"></div> Loading...
         </div>
-
-        <p>Server list</a></p>
-
-        <h2><a href='#' onclick="setServerUrl(null)"><span class="server-url"></span></a> / 
-            <a href='#' onclick="setCorpusName(null)"><span class="corpus-name"></span></a></h2>
 
         <div id="choose-server">
             <h3>Server:</h3>
@@ -28,7 +25,7 @@
 
         <div id="choose-corpus">
             <label for="corpus">Corpus:</label>
-            <select id="corpus"></select>
+            <ul id="corpus-list"></ul>
         </div>
 
         <form id="search-form">
@@ -57,17 +54,20 @@
             
         </form>
 
-        URL: <a target="_blank" href="" id='url'></a>
+        <p class="url">
+            URL: <a target="_blank" href="" id='url' class="show-url"></a>
+        </p>
 
-        <p>View response as: <select id="view-type">
-            <option value="results">results</option>
-            <option value="plain">plain</option>
-        </select></p>
+        <div id="response-view">
 
-        <pre id='plain-results'>
-        </pre>
+            <p><label for="view-plain"><input type="checkbox" id="view-plain" /> View plain</label></p>
 
-        <div id='results'>
+             <!-- The response will be shown here -->
+            <pre id='plain-results'>
+            </pre>
+
+            <div id='results'>
+            </div>
         </div>
 
         <!--

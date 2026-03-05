@@ -8,24 +8,21 @@
 	</head>
 	<body>
 		<h1>BlackLab workbench</h1>
-        <h2><a href='#' onclick="setServerUrl(null)"><span class="server-url"></span></a>
-            <a href='#' onclick="setCorpusName(null)"><span class="corpus-name"></span></a></h2>
+        <table>
+            <tr>
+                <th>Server:</th>
+                <td><select id="server-list"></select></td>
+                <td id="server-info"></td>
+            </tr>
+            <tr>
+                <th>Corpus:</th>
+                <td><select id="corpus-list"></select></td>
+                <td id="corpus-info"></td>
+            </tr>
+        </table>
 
         <div class="loading-overlay">
             <div class="spinner"></div> Loading...
-        </div>
-
-        <div id="choose-server">
-            <h3>Server:</h3>
-            <ul id="server-list">
-                <li><a href="#" onclick="setServerUrl(this.innerText); return false">http://localhost:8080/blacklab-server</a></li>
-                <li><a href="#" onclick="setServerUrl(this.innerText); return false">http://svotmc10.ivdnt.loc:8080/blacklab-server</a></li>
-            </ul>
-        </div>
-
-        <div id="choose-corpus">
-            <label for="corpus">Corpus:</label>
-            <ul id="corpus-list"></ul>
         </div>
 
         <form id="search-form">
@@ -37,12 +34,20 @@
                         <label for="patt">BCQL query:</label>
                         <textarea id="patt"></textarea>
                     </li>
-                    <li id="li-outputformat">
+                    <li>
                         <label for="outputformat">Output Format:</label>
                         <select id="outputformat">
                             <option value="json">JSON</option>
                             <option value="xml">XML</option>
                             <option value="csv">CSV</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="api">API Version:</label>
+                        <select id="api">
+                            <option value="">default</option>
+                            <option value="4">v4</option>
+                            <option value="5">v5</option>
                         </select>
                     </li>
                     <li>

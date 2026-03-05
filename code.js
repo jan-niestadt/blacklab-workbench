@@ -9,11 +9,12 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
 
-    // Corpus change
-    //document.getElementById('corpus').addEventListener('change', event => setCorpusName(event.target.value));
+    document.getElementById('server-list').addEventListener('change', event => setServerUrl(event.target.value));
+
+    document.getElementById('corpus-list').addEventListener('change', event => setCorpusName(event.target.value));
 
     // Form element change hooks    
-    document.querySelectorAll('select#corpus, form select, form input, form textarea').forEach(element => {
+    document.querySelectorAll('form select, form input, form textarea').forEach(element => {
         element.addEventListener('change', onFormElementChange);
     });
     // Form text input keyup hooks
@@ -21,7 +22,7 @@ function init() {
         element.addEventListener('keyup', onFormElementChange);
     });
 
-    // Clicking search performs the search
+    // Submitting form performs the search
     document.getElementById('search-form').addEventListener('submit', event => {
         event.preventDefault();
         performSearch();
@@ -30,6 +31,7 @@ function init() {
     // Changing the view type updates the displayed results
     document.getElementById('view-plain').addEventListener('change', showSearchResults);
 
+    loadServers();
     updateUi();
 }
 
@@ -76,6 +78,10 @@ async function performSearch() {
 
 let corpusName = null;
 
+let serverUrl = null;
+
+let serverApiVersion = null;
+
 function setCorpusName(name) {
     corpusName = name;
     updateUi();
@@ -84,8 +90,6 @@ function setCorpusName(name) {
 function onFormElementChange(event) {
     updateSearchUrl();
 }
-
-let serverUrl = null;
 
 function setServerUrl(url) {
     serverUrl = url;
@@ -114,7 +118,11 @@ function updateSearchUrl() {
     const params = new URLSearchParams();
     params.append("patt", document.getElementById('patt').value);
     params.append("outputformat", document.getElementById('outputformat').value);
-    document.getElementById('url').href = `${server}/corpora/${corpus}/${endpoint}?${params}`;
+    const api = document.getElementById('api').value || serverApiVersion;
+    if (api !== serverApiVersion)
+        params.append("api", api);
+    const optCorpora = api >= 5 ? '/corpora' : '';
+    document.getElementById('url').href = `${server}${optCorpora}/${corpus}/${endpoint}?${params}`;
 }
 
 function sleep(ms) {
@@ -123,27 +131,72 @@ function sleep(ms) {
 
 let currentCorporaServer = null;
 
+function loading(b) {
+    if (b) {
+        document.body.classList.add('loading');
+    } else {
+        document.body.classList.remove('loading');
+    }
+}
+
+async function withLoading(fn, errorHandler) {
+    loading(true);
+    try {
+        return await fn();
+    } catch (error) {
+        if (errorHandler) {
+            errorHandler(error);
+        } else {
+            console.error(error);
+        }
+    } finally {
+        loading(false);
+    }
+}
+
+async function loadServers() {
+    return withLoading(async () => {
+        console.log('Loading servers...');
+        const servers = [
+            { display: '--- choose server ---', url: '' },
+            { url: 'http://localhost:8080/blacklab-server' },
+            { url: 'http://svotmc10.ivdnt.loc:8080/blacklab-server' }
+        ]
+        document.getElementById('server-list').innerHTML = 
+            servers.map(server => `<option value="${server.url}">${server.display || server.url}</option>`).join('');
+    }, (error) => {
+        console.error('Error loading servers:', error);
+        document.getElementById('server-list').innerHTML = '<option value="">Error loading servers</option>';
+    });
+}
+
 async function loadCorpora() {
     if (!serverUrl || serverUrl === currentCorporaServer)
         return;
     currentCorporaServer = serverUrl;
-    document.body.classList.add('loading');
-    try {
-        const response = await fetch(`${serverUrl}/?${params}`, {
+    return withLoading(async () => {
+        const url = `${serverUrl}/?${params}`;
+        console.log('Loading corpora from', url);
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'
             },
         });
         const data = await response.json();
+        serverApiVersion = data.apiVersion.trim().charAt(0);
+        document.getElementById('server-info').textContent = `API v${data.apiVersion}`;
         document.getElementById('corpus-list').innerHTML = 
-            Object.entries(data.corpora).map(([key, corpus]) => `<li><a href="#" onclick="setCorpusName('${key}'); return false">${key}${corpus.custom.displayName ? ` (${corpus.custom.displayName})` : ''}</a></li>`).join('');
+            '<option value="">--- choose corpus ---</option>' +
+            Object.entries(data.corpora).map(([key, corpus]) => {
+                const display = key + (corpus.custom.displayName ? ` (${corpus.custom.displayName})` : '');
+                return `<option value="${key}">${display}</option>`;
+            })
+            .join('');
         updateSearchUrl();
         //await sleep(2000);
-    } catch (error) {
+    }, (error) => {
         console.error('Error loading corpora:', error);
-        document.getElementById('corpus').innerHTML = '<option value="">Error loading corpora</option>';
-    } finally {
-        document.body.classList.remove('loading');
-    }
+        document.getElementById('corpus-list').innerHTML = '<option value="">Error loading corpora</option>';
+    });
 }
